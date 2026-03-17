@@ -1,0 +1,71 @@
+
+{
+  "user": {
+    "id": "u1",
+    "name": "Juan Pérez",
+    "role": "Líder de Alabanza",
+    "ministry": "Alabanza",
+    "email": "juan.perez@iglesia.com",
+    "phone": "+57 300 123 4567",
+    "avatar": "https://picsum.photos/seed/juan/200/200"
+  },
+  "events": [
+    {
+      "id": "e1",
+      "date": "2024-05-19",
+      "time": "09:00 AM",
+      "ministries": {
+        "Alabanza": [
+          { "position": "Voz Principal", "personName": "Juan Pérez" },
+          { "position": "Guitarra Eléctrica", "personName": "Andrés Soto" },
+          { "position": "Batería", "personName": "Carlos Ruiz" },
+          { "position": "Bajo", "personName": "Maria Lopez" }
+        ],
+        "Audiovisuales": [
+          { "position": "Cámara 1", "personName": "Lucas Silva" },
+          { "position": "Computador Letras", "personName": "Sara Gomez" },
+          { "position": "Consola Sonido", "personName": "Roberto Díaz" }
+        ],
+        "Bienvenida": [
+          { "position": "Puerta Principal", "personName": "Elena Torres" }
+        ]
+      }
+    },
+    {
+      "id": "e2",
+      "date": "2024-05-19",
+      "time": "06:00 PM",
+      "ministries": {
+        "Alabanza": [
+          { "position": "Voz Principal", "personName": "Diana Rojas" },
+          { "position": "Piano", "personName": "Mateo Garcia" },
+          { "position": "Batería", "personName": "Carlos Ruiz" }
+        ],
+        "Audiovisuales": [
+          { "position": "Cámara 1", "personName": "Lucas Silva" },
+          { "position": "Stream Manager", "personName": "Kevin Smith" }
+        ]
+      }
+    },
+    {
+      "id": "e3",
+      "date": "2024-05-22",
+      "time": "07:30 PM",
+      "ministries": {
+        "Alabanza": [
+          { "position": "Guitarra Acústica", "personName": "Juan Pérez" }
+        ],
+        "Intercesión": [
+          { "position": "Guía Oración", "personName": "Pastor Mario" }
+        ]
+      }
+    }
+  ],
+  "mockUsers": [
+    { "id": "u1", "name": "Juan Pérez", "role": "Líder", "ministry": "Alabanza", "email": "juan@iglesia.com", "avatar": "https://picsum.photos/seed/juan/200/200", "active": true },
+    { "id": "u2", "name": "Andrés Soto", "role": "Músico", "ministry": "Alabanza", "email": "andres@iglesia.com", "avatar": "https://picsum.photos/seed/andres/200/200", "active": true },
+    { "id": "u3", "name": "Sara Gomez", "role": "Media", "ministry": "Audiovisuales", "email": "sara@iglesia.com", "avatar": "https://picsum.photos/seed/sara/200/200", "active": true },
+    { "id": "u4", "name": "Carlos Ruiz", "role": "Baterista", "ministry": "Alabanza", "email": "carlos@iglesia.com", "avatar": "https://picsum.photos/seed/carlos/200/200", "active": true },
+    { "id": "u5", "name": "Maria Lopez", "role": "Bajista", "ministry": "Alabanza", "email": "maria@iglesia.com", "avatar": "https://picsum.photos/seed/maria/200/200", "active": true }
+  ]
+}
