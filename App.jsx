@@ -9,7 +9,6 @@ import TCDManager from './components/TCDManager.jsx';
 import Reports from './components/Reports.jsx';
 import MinistryManager from './components/MinistryManager.jsx';
 import Contact from './components/Contact.jsx';
-import { apiService } from './src/services/api.ts';
 
 const App = () => {
   const [activeTab, setActiveTab] = useState('schedule');
@@ -17,39 +16,39 @@ const App = () => {
   const [users, setUsers] = useState([]);
   const [tcdEntries, setTcdEntries] = useState([]);
   const [events, setEvents] = useState([]);
-  const [ministries, setMinistries] = useState([]);
+  const [ministries, setMinistries] = useState([
+    { id: 'm1', name: 'Alabanza', positions: ['Guitarra', 'Bajo', 'Batería', 'Piano', 'Voz'] },
+    { id: 'm2', name: 'Audiovisuales', positions: ['Cámara', 'Computador Letras', 'Consola Sonido'] }
+  ]);
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         setLoading(true);
-        // Cargar todos los datos en paralelo
-        const [usersData, eventsData, ministriesData, tcdData, assignmentsData] = await Promise.all([
-          apiService.getUsers(),
-          apiService.getEvents(),
-          apiService.getMinistries(),
-          apiService.getTcdEntries(),
-          apiService.getAssignments()
-        ]);
-
+        
+        // Fetch users from the external API
+        const usersRes = await fetch('https://anunciaig.com/api/users');
+        const usersData = await usersRes.json();
         setUsers(usersData);
-        setEvents(eventsData);
-        setMinistries(ministriesData);
-        setTcdEntries(tcdData);
-        setAssignments(assignmentsData);
+
+        // Fetch other data from local data.json
+        const res = await fetch('./data.json');
+        const jsonData = await res.json();
         
-        // Simular usuario logueado (esto vendría de un auth service real)
-        if (usersData.length > 0) {
-          setUser(usersData[0]);
-        }
+        setEvents(jsonData.events || []);
+        setUser(jsonData.user);
         
+        const mockTcds = [
+          { id: 't1', userId: 'u1', userName: 'Juan Pérez', date: '2024-05-18', image: 'https://picsum.photos/seed/bible1/400/300' },
+          { id: 't2', userId: 'u1', userName: 'Juan Pérez', date: '2024-05-19', image: 'https://picsum.photos/seed/bible2/400/300' },
+          { id: 't3', userId: 'u2', userName: 'Andrés Soto', date: '2024-05-19', image: 'https://picsum.photos/seed/bible3/400/300' }
+        ];
+        setTcdEntries(mockTcds);
         setLoading(false);
       } catch (err) {
-        console.error("Error cargando datos de la API Java:", err);
-        setError("No se pudo conectar con el servidor. Asegúrate de que el backend Java esté corriendo.");
+        console.error("Error cargando datos:", err);
         setLoading(false);
       }
     };
@@ -57,74 +56,35 @@ const App = () => {
     loadInitialData();
   }, []);
 
-  const handleAddUser = async (newUser) => {
-    try {
-      // Nota: Aquí deberías tener un endpoint POST /users en Java
-      // Por ahora lo simulamos localmente si el endpoint no existe aún
-      setUsers([...users, { ...newUser, id: Date.now().toString(), active: true }]);
-    } catch (err) {
-      alert("Error al guardar usuario");
-    }
+  const handleAddUser = (newUser) => {
+    setUsers([...users, { ...newUser, id: Date.now().toString(), active: true }]);
   };
 
   const toggleUserStatus = (id) => {
     setUsers(users.map(u => u.id === id ? { ...u, active: !u.active } : u));
   };
 
-  const addTcdEntry = async (entry) => {
-    try {
-      const savedEntry = await apiService.createTcdEntry(entry);
-      setTcdEntries([savedEntry, ...tcdEntries]);
-    } catch (err) {
-      alert("Error al guardar TCD: " + err.message);
-    }
+  const addTcdEntry = (entry) => {
+    setTcdEntries([...tcdEntries, { ...entry, id: Date.now().toString() }]);
   };
 
-  const handleAddMinistry = async (name, positions) => {
-    try {
-      const savedMin = await apiService.createMinistry({ name, positions });
-      setMinistries([...ministries, savedMin]);
-    } catch (err) {
-      alert("Error al crear ministerio: " + err.message);
-    }
+  const handleAddMinistry = (name, positions) => {
+    setMinistries([...ministries, { id: Date.now().toString(), name, positions }]);
   };
 
-  const handleAssignPerson = async (assignment) => {
-    try {
-      const savedAssign = await apiService.createAssignment(assignment);
-      setAssignments([...assignments, savedAssign]);
-    } catch (err) {
-      alert("Error al asignar persona: " + err.message);
-    }
+  const handleAssignPerson = (assignment) => {
+    setAssignments([...assignments, { ...assignment, id: Date.now().toString() }]);
   };
 
-  const handleAddEvent = async (newEvent) => {
-    try {
-      const savedEvent = await apiService.createEvent(newEvent);
-      setEvents([savedEvent, ...events]);
-      setActiveTab('schedule');
-    } catch (err) {
-      alert("Error al publicar programación: " + err.message);
-    }
+  const handleAddEvent = (newEvent) => {
+    setEvents([newEvent, ...events]);
+    setActiveTab('schedule');
   };
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-      <p className="text-slate-500 font-medium">Conectando con el servidor Java...</p>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="bg-white p-8 rounded-3xl shadow-xl border border-red-100 text-center max-w-md">
-        <i className="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Error de Conexión</h2>
-        <p className="text-slate-500 mb-6">{error}</p>
-        <button onClick={() => window.location.reload()} className="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold">
-          Reintentar
-        </button>
-      </div>
+      <p className="text-slate-500 font-medium">Cargando aplicación...</p>
     </div>
   );
 
