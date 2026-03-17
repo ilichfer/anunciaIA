@@ -3,7 +3,7 @@
 Esta guía detalla los endpoints y las estructuras JSON que el frontend espera del backend en Java (Spring Boot).
 
 ## Configuración Base
-La URL base por defecto es `http://localhost:8080/api`. Puedes cambiarla en el archivo `.env`.
+La URL base por defecto es `https://anunciaig.com/`. Puedes cambiarla en el archivo `.env`.
 
 ---
 
