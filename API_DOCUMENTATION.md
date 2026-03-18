@@ -41,7 +41,13 @@ Lista los ministerios y sus posiciones disponibles.
   {
     "id": "m1",
     "name": "Alabanza",
-    "positions": ["Guitarra", "Bajo", "Batería", "Piano", "Voz"]
+    "positions": [
+      { "id": "p1", "name": "Guitarra" },
+      { "id": "p2", "name": "Bajo" },
+      { "id": "p3", "name": "Batería" },
+      { "id": "p4", "name": "Piano" },
+      { "id": "p5", "name": "Voz" }
+    ]
   }
 ]
 ```
@@ -53,7 +59,10 @@ Crea un nuevo ministerio.
 ```json
 {
   "name": "Audiovisuales",
-  "positions": ["Cámara", "Sonido"]
+  "positions": [
+    { "id": "p6", "name": "Cámara" },
+    { "id": "p7", "name": "Sonido" }
+  ]
 }
 ```
 
@@ -71,10 +80,17 @@ Obtiene la programación de actividades.
     "id": "e1",
     "date": "2024-05-19",
     "time": "09:00 AM",
+    "coordinator": {
+      "name": "Pastor Mario",
+      "date": "2024-05-19"
+    },
     "ministries": {
       "Alabanza": [
-        { "position": "Voz Principal", "personName": "Juan Pérez" },
-        { "position": "Bajo", "personName": "Maria Lopez" }
+        { "positionId": "p5", "position": "Voz Principal", "personName": "Juan Pérez" },
+        { "positionId": "p2", "position": "Bajo", "personName": "Maria Lopez" }
+      ],
+      "Kids": [
+        { "positionId": "p10", "position": "Maestro", "personName": "Elena Torres" }
       ]
     }
   }
@@ -89,9 +105,13 @@ Publica una nueva programación.
 {
   "date": "2024-06-01",
   "time": "10:00 AM",
+  "coordinator": {
+    "name": "Elena Torres",
+    "date": "2024-06-01"
+  },
   "ministries": {
     "Alabanza": [
-      { "position": "Guitarra", "personName": "Andrés Soto" }
+      { "positionId": "p1", "position": "Guitarra", "personName": "Andrés Soto" }
     ]
   }
 }
@@ -146,7 +166,8 @@ Lista las habilidades o especialidades de los servidores.
     "userName": "Juan Pérez",
     "ministryId": "m1",
     "ministryName": "Alabanza",
-    "position": "Guitarra"
+    "positionId": "p5",
+    "positionName": "Voz"
   }
 ]
 ```
@@ -161,6 +182,7 @@ Registra una nueva habilidad para un servidor.
   "userName": "Andrés Soto",
   "ministryId": "m1",
   "ministryName": "Alabanza",
-  "position": "Batería"
+  "positionId": "p3",
+  "positionName": "Batería"
 }
 ```

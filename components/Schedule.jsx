@@ -38,21 +38,34 @@ const Schedule = ({ events }) => {
       if (!groups[event.date]) {
         groups[event.date] = {
           date: event.date,
-          ministries: {}
+          ministries: {},
+          coordinators: []
         };
       }
       
-      Object.keys(event.ministries).forEach(minName => {
-        if (!groups[event.date].ministries[minName]) {
-          groups[event.date].ministries[minName] = [];
+      if (event.coordinator && event.coordinator.name) {
+        // Evitar duplicados de coordinadores para el mismo día
+        if (!groups[event.date].coordinators.some(c => c.name === event.coordinator.name)) {
+          groups[event.date].coordinators.push(event.coordinator);
         }
-        // Combinar asignaciones de este ministerio para este día
-        const assignmentsWithContext = event.ministries[minName].map(asgn => ({
-          ...asgn,
-          eventTime: event.time
-        }));
-        groups[event.date].ministries[minName].push(...assignmentsWithContext);
-      });
+      }
+      
+      if (event.ministries) {
+        Object.keys(event.ministries).forEach(minName => {
+          const ministryAssignments = event.ministries[minName];
+          if (!Array.isArray(ministryAssignments)) return;
+
+          if (!groups[event.date].ministries[minName]) {
+            groups[event.date].ministries[minName] = [];
+          }
+          // Combinar asignaciones de este ministerio para este día
+          const assignmentsWithContext = ministryAssignments.map(asgn => ({
+            ...asgn,
+            eventTime: event.time
+          }));
+          groups[event.date].ministries[minName].push(...assignmentsWithContext);
+        });
+      }
     });
     
     return Object.values(groups).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -124,6 +137,36 @@ const Schedule = ({ events }) => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {/* Banner de Coordinador (Idea 1: Hero Banner) */}
+                <div className="col-span-full">
+                  {dayGroup.coordinators && dayGroup.coordinators.length > 0 ? (
+                    dayGroup.coordinators.map((coord, idx) => (
+                      <div key={`coord-${idx}`} className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-6 mb-2 shadow-lg shadow-emerald-100 flex items-center justify-between group hover:shadow-emerald-200 transition-all animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div className="flex items-center gap-6">
+                          <div className="w-16 h-16 bg-white/20 backdrop-blur-md text-white rounded-2xl flex items-center justify-center font-black text-2xl border border-white/30 group-hover:scale-110 transition-transform">
+                            {coord.name ? coord.name.charAt(0) : '?'}
+                          </div>
+                          <div>
+                            <div className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Coordinador General</div>
+                            <div className="text-white font-bold text-2xl leading-tight">{coord.name || 'Sin nombre'}</div>
+                          </div>
+                        </div>
+                        <div className="hidden md:flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/10">
+                          <i className="fas fa-user-shield text-emerald-200"></i>
+                          <span className="text-white text-xs font-bold uppercase tracking-widest">Líder de Turno</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="bg-slate-50 rounded-3xl border border-dashed border-slate-300 p-6 mb-2 flex items-center justify-center gap-4 animate-in fade-in duration-700">
+                      <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                        <i className="fas fa-user-slash text-slate-300 text-sm"></i>
+                      </div>
+                      <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em]">No hay coordinador programado para este día</p>
+                    </div>
+                  )}
+                </div>
+
                 {Object.keys(dayGroup.ministries).map(minName => (
                   <div key={minName} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col hover:border-indigo-300 transition-all hover:shadow-md">
                     <div className="bg-indigo-600 px-5 py-3 flex justify-between items-center">
@@ -138,9 +181,11 @@ const Schedule = ({ events }) => {
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
                               {asgn.position}
                             </span>
-                            <span className="text-[9px] font-bold text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded">
-                              {asgn.eventTime}
-                            </span>
+                            {asgn.eventTime && (
+                              <span className="text-[9px] font-bold text-indigo-400 bg-indigo-50 px-1.5 py-0.5 rounded">
+                                {asgn.eventTime}
+                              </span>
+                            )}
                           </div>
                           <div className="font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
                             {asgn.personName}

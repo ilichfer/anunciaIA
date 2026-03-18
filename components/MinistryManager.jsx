@@ -4,7 +4,7 @@ import { useState } from 'react';
 const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssignPerson, onAddEvent }) => {
   const [view, setView] = useState('list'); // 'list' | 'add-ministry' | 'assign' | 'create-schedule'
   const [newMin, setNewMin] = useState({ name: '', positions: '' });
-  const [newAssign, setNewAssign] = useState({ userId: '', ministryId: '', position: '' });
+  const [newAssign, setNewAssign] = useState({ userId: '', ministryId: '', positionId: '' });
   
   // Estado para la creación de nueva programación
   const [newEvent, setNewEvent] = useState({
@@ -16,7 +16,10 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
 
   const handleCreateMinistry = (e) => {
     e.preventDefault();
-    const posArray = newMin.positions.split(',').map(p => p.trim()).filter(p => p !== '');
+    const posArray = newMin.positions.split(',')
+      .map(p => p.trim())
+      .filter(p => p !== '')
+      .map(p => ({ id: `p-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, name: p }));
     onAddMinistry(newMin.name, posArray);
     setNewMin({ name: '', positions: '' });
     setView('list');
@@ -26,21 +29,26 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
     e.preventDefault();
     const user = users.find(u => u.id === newAssign.userId);
     const ministry = ministries.find(m => m.id === newAssign.ministryId);
+    const positionObj = ministry?.positions.find(p => p.id === newAssign.positionId);
+    
     onAssignPerson({
-      ...newAssign,
+      userId: newAssign.userId,
+      ministryId: newAssign.ministryId,
+      positionId: newAssign.positionId,
       userName: user?.name,
-      ministryName: ministry?.name
+      ministryName: ministry?.name,
+      positionName: positionObj?.name
     });
-    setNewAssign({ userId: '', ministryId: '', position: '' });
+    setNewAssign({ userId: '', ministryId: '', positionId: '' });
     setView('list');
   };
 
-  const handleAddPersonToEvent = (position, personName) => {
+  const handleAddPersonToEvent = (positionId, personName) => {
     setNewEvent(prev => ({
       ...prev,
       assignments: {
         ...prev.assignments,
-        [position]: personName
+        [positionId]: personName
       }
     }));
   };
@@ -52,15 +60,20 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
     }
 
     const ministry = ministries.find(m => m.id === newEvent.selectedMinistryId);
+    if (!ministry) return;
     
     // Convertir el formato local al formato que espera el componente Schedule
     const formattedMinistries = {
       [ministry.name]: Object.entries(newEvent.assignments)
         .filter(([, personName]) => personName !== "")
-        .map(([position, personName]) => ({
-          position,
-          personName
-        }))
+        .map(([positionId, personName]) => {
+          const posObj = ministry.positions.find(p => p.id === positionId);
+          return {
+            positionId,
+            position: posObj?.name || positionId, // Mantenemos 'position' para compatibilidad con Schedule
+            personName
+          };
+        })
     };
 
     if (formattedMinistries[ministry.name].length === 0) {
@@ -151,15 +164,15 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {activeMinistryForSchedule.positions.map(pos => (
-                  <div key={pos} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                  <div key={pos.id} className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-tighter">{pos}</span>
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-tighter">{pos.name}</span>
                       <i className="fas fa-chevron-right text-[10px] text-slate-300"></i>
                     </div>
                     <select 
                       className="w-full p-2.5 bg-slate-50 border-none rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none"
-                      value={newEvent.assignments[pos] || ""}
-                      onChange={(e) => handleAddPersonToEvent(pos, e.target.value)}
+                      value={newEvent.assignments[pos.id] || ""}
+                      onChange={(e) => handleAddPersonToEvent(pos.id, e.target.value)}
                     >
                       <option value="">-- Sin asignar --</option>
                       {users.filter(u => u.active).map(u => (
@@ -237,8 +250,8 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {m.positions.map(pos => (
-                    <span key={pos} className="text-[10px] bg-slate-50 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-100 font-bold uppercase">
-                      {pos}
+                    <span key={pos.id} className="text-[10px] bg-slate-50 text-slate-500 px-3 py-1.5 rounded-lg border border-slate-100 font-bold uppercase">
+                      {pos.name}
                     </span>
                   ))}
                 </div>
@@ -267,7 +280,7 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
                       </div>
                     </div>
                     <div className="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border border-indigo-100">
-                      {a.position}
+                      {a.positionName || a.position}
                     </div>
                   </div>
                 ))}
@@ -302,7 +315,7 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Ministerio</label>
                 <select 
                   className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none"
-                  value={newAssign.ministryId} onChange={e => setNewAssign({...newAssign, ministryId: e.target.value, position: ''})} required
+                  value={newAssign.ministryId} onChange={e => setNewAssign({...newAssign, ministryId: e.target.value, positionId: ''})} required
                 >
                   <option value="">-- Seleccionar --</option>
                   {ministries.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -315,12 +328,12 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
                 <div className="flex flex-wrap gap-2">
                   {ministries.find(m => m.id === newAssign.ministryId)?.positions.map(pos => (
                     <button
-                      key={pos}
+                      key={pos.id}
                       type="button"
-                      onClick={() => setNewAssign({...newAssign, position: pos})}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${newAssign.position === pos ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-400'}`}
+                      onClick={() => setNewAssign({...newAssign, positionId: pos.id})}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${newAssign.positionId === pos.id ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-400'}`}
                     >
-                      {pos}
+                      {pos.name}
                     </button>
                   ))}
                 </div>
@@ -328,7 +341,7 @@ const MinistryManager = ({ ministries, users, assignments, onAddMinistry, onAssi
             )}
             <div className="flex justify-end gap-3 pt-4">
               <button type="button" onClick={() => setView('list')} className="px-6 py-3 font-bold text-slate-500">Cancelar</button>
-              <button type="submit" disabled={!newAssign.position} className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50">
+              <button type="submit" disabled={!newAssign.positionId} className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-bold shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all disabled:opacity-50">
                 Guardar Especialidad
               </button>
             </div>

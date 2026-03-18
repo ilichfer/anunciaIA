@@ -4,6 +4,7 @@ import Navbar from './components/Navbar.jsx';
 import Header from './components/Header.jsx';
 import Profile from './components/Profile.jsx';
 import Schedule from './components/Schedule.jsx';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import UsersManager from './components/UsersManager.jsx';
 import TCDManager from './components/TCDManager.jsx';
 import Reports from './components/Reports.jsx';
@@ -18,23 +19,56 @@ const App = () => {
   const [tcdEntries, setTcdEntries] = useState([]);
   const [events, setEvents] = useState([]);
   const [ministries, setMinistries] = useState([
-    { id: 'm1', name: 'Alabanza', positions: ['Guitarra', 'Bajo', 'Batería', 'Piano', 'Voz'] },
-    { id: 'm2', name: 'Audiovisuales', positions: ['Cámara', 'Computador Letras', 'Consola Sonido'] }
+    { 
+      id: 'm1', 
+      name: 'Alabanza', 
+      positions: [
+        { id: 'p1', name: 'Guitarra' },
+        { id: 'p2', name: 'Bajo' },
+        { id: 'p3', name: 'Batería' },
+        { id: 'p4', name: 'Piano' },
+        { id: 'p5', name: 'Voz' }
+      ] 
+    },
+    { 
+      id: 'm2', 
+      name: 'Audiovisuales', 
+      positions: [
+        { id: 'p6', name: 'Cámara' },
+        { id: 'p7', name: 'Computador Letras' },
+        { id: 'p8', name: 'Consola Sonido' }
+      ] 
+    }
   ]);
-  const [assignments, setAssignments] = useState([]);
+  const [assignments, setAssignments] = useState([
+    { id: 'a1', userId: 'u1', userName: 'Juan Pérez', ministryId: 'm1', ministryName: 'Alabanza', positionId: 'p5', positionName: 'Voz' },
+    { id: 'a2', userId: 'u2', userName: 'Andrés Soto', ministryId: 'm1', ministryName: 'Alabanza', positionId: 'p1', positionName: 'Guitarra' },
+    { id: 'a3', userId: 'u3', userName: 'Sara Gomez', ministryId: 'm2', ministryName: 'Audiovisuales', positionId: 'p7', positionName: 'Computador Letras' }
+  ]);
   const [localLoading, setLocalLoading] = useState(true);
 
   // Using the custom hook for external API data
   const { data: usersData, loading: usersLoading } = useFetch('/api/users');
   const { data: eventsData, loading: eventsLoading } = useFetch('/api/events');
+  const { data: ministriesData, loading: ministriesLoading } = useFetch('/api/ministries');
 
   useEffect(() => {
     if (usersData) setUsers(usersData);
   }, [usersData]);
 
   useEffect(() => {
-    if (eventsData) setEvents(eventsData);
+    if (eventsData) {
+      if (Array.isArray(eventsData)) {
+        setEvents(eventsData);
+      } else if (eventsData.events) {
+        setEvents(eventsData.events);
+      }
+    }
   }, [eventsData]);
+
+  useEffect(() => {
+    if (ministriesData && ministriesData.length > 0) setMinistries(ministriesData);
+  }, [ministriesData]);
 
   useEffect(() => {
     const loadLocalData = async () => {
@@ -46,8 +80,19 @@ const App = () => {
         setUser(jsonData.user);
         
         // If API events fail or are empty, use local ones as fallback
-        if (!eventsData || eventsData.length === 0) {
+        let finalEvents = [];
+        if (eventsData) {
+          if (Array.isArray(eventsData)) {
+            finalEvents = eventsData;
+          } else if (eventsData.events && Array.isArray(eventsData.events)) {
+            finalEvents = eventsData.events;
+          }
+        }
+        
+        if (finalEvents.length === 0) {
           setEvents(jsonData.events || []);
+        } else {
+          setEvents(finalEvents);
         }
 
         const mockTcds = [
@@ -91,7 +136,7 @@ const App = () => {
     setActiveTab('schedule');
   };
 
-  const isLoading = usersLoading || eventsLoading || localLoading;
+  const isLoading = usersLoading || eventsLoading || ministriesLoading || localLoading;
 
   if (isLoading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
@@ -106,7 +151,11 @@ const App = () => {
       <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
       <main className="max-w-6xl mx-auto px-4 py-8">
         {user && activeTab === 'profile' && <Profile user={user} events={events} />}
-        {activeTab === 'schedule' && <Schedule events={events} />}
+        {activeTab === 'schedule' && (
+          <ErrorBoundary>
+            <Schedule events={events} />
+          </ErrorBoundary>
+        )}
         {activeTab === 'users' && (
           <UsersManager users={users} onAddUser={handleAddUser} onToggleStatus={toggleUserStatus} />
         )}
