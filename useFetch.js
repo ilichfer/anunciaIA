@@ -12,9 +12,12 @@ const useFetch = (endpoint) => {
       setLoading(true);
       setError(null);
       
-      // Ensure endpoint starts with / if not present
-      const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-      const response = await fetch(`${BASE_URL}${path}`);
+      // If endpoint is a full URL, use it directly. Otherwise, prepend BASE_URL.
+      const url = endpoint.startsWith('http') 
+        ? endpoint 
+        : `${BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error(`Error HTTP: ${response.status}`);

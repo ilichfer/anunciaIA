@@ -18,39 +18,20 @@ const App = () => {
   const [users, setUsers] = useState([]);
   const [tcdEntries, setTcdEntries] = useState([]);
   const [events, setEvents] = useState([]);
-  const [ministries, setMinistries] = useState([
-    { 
-      id: 'm1', 
-      name: 'Alabanza', 
-      positions: [
-        { id: 'p1', name: 'Guitarra' },
-        { id: 'p2', name: 'Bajo' },
-        { id: 'p3', name: 'Batería' },
-        { id: 'p4', name: 'Piano' },
-        { id: 'p5', name: 'Voz' }
-      ] 
-    },
-    { 
-      id: 'm2', 
-      name: 'Audiovisuales', 
-      positions: [
-        { id: 'p6', name: 'Cámara' },
-        { id: 'p7', name: 'Computador Letras' },
-        { id: 'p8', name: 'Consola Sonido' }
-      ] 
-    }
-  ]);
-  const [assignments, setAssignments] = useState([
-    { id: 'a1', userId: 'u1', userName: 'Juan Pérez', ministryId: 'm1', ministryName: 'Alabanza', positionId: 'p5', positionName: 'Voz' },
-    { id: 'a2', userId: 'u2', userName: 'Andrés Soto', ministryId: 'm1', ministryName: 'Alabanza', positionId: 'p1', positionName: 'Guitarra' },
-    { id: 'a3', userId: 'u3', userName: 'Sara Gomez', ministryId: 'm2', ministryName: 'Audiovisuales', positionId: 'p7', positionName: 'Computador Letras' }
-  ]);
-  const [localLoading, setLocalLoading] = useState(true);
+  const [ministries, setMinistries] = useState([]);
+  const [assignments, setAssignments] = useState([]);
 
   // Using the custom hook for external API data
+  const { data: userData, loading: userLoading } = useFetch('/api/user');
   const { data: usersData, loading: usersLoading } = useFetch('/api/users');
-  const { data: eventsData, loading: eventsLoading } = useFetch('/api/events');
+  const { data: eventsData, loading: eventsLoading } = useFetch('https://anunciaig.com/api/events');
   const { data: ministriesData, loading: ministriesLoading } = useFetch('/api/ministries');
+  const { data: tcdData, loading: tcdLoading } = useFetch('/api/tcd');
+  const { data: assignmentsData, loading: assignmentsLoading } = useFetch('/api/assignments');
+
+  useEffect(() => {
+    if (userData) setUser(userData);
+  }, [userData]);
 
   useEffect(() => {
     if (usersData) setUsers(usersData);
@@ -67,49 +48,16 @@ const App = () => {
   }, [eventsData]);
 
   useEffect(() => {
-    if (ministriesData && ministriesData.length > 0) setMinistries(ministriesData);
+    if (ministriesData) setMinistries(ministriesData);
   }, [ministriesData]);
 
   useEffect(() => {
-    const loadLocalData = async () => {
-      try {
-        setLocalLoading(true);
-        const res = await fetch('./data.json');
-        const jsonData = await res.json();
-        
-        setUser(jsonData.user);
-        
-        // If API events fail or are empty, use local ones as fallback
-        let finalEvents = [];
-        if (eventsData) {
-          if (Array.isArray(eventsData)) {
-            finalEvents = eventsData;
-          } else if (eventsData.events && Array.isArray(eventsData.events)) {
-            finalEvents = eventsData.events;
-          }
-        }
-        
-        if (finalEvents.length === 0) {
-          setEvents(jsonData.events || []);
-        } else {
-          setEvents(finalEvents);
-        }
+    if (tcdData) setTcdEntries(tcdData);
+  }, [tcdData]);
 
-        const mockTcds = [
-          { id: 't1', userId: 'u1', userName: 'Juan Pérez', date: '2024-05-18', image: 'https://picsum.photos/seed/bible1/400/300' },
-          { id: 't2', userId: 'u1', userName: 'Juan Pérez', date: '2024-05-19', image: 'https://picsum.photos/seed/bible2/400/300' },
-          { id: 't3', userId: 'u2', userName: 'Andrés Soto', date: '2024-05-19', image: 'https://picsum.photos/seed/bible3/400/300' }
-        ];
-        setTcdEntries(mockTcds);
-        setLocalLoading(false);
-      } catch (err) {
-        console.error("Error cargando datos locales:", err);
-        setLocalLoading(false);
-      }
-    };
-
-    loadLocalData();
-  }, [eventsData]);
+  useEffect(() => {
+    if (assignmentsData) setAssignments(assignmentsData);
+  }, [assignmentsData]);
 
   const handleAddUser = (newUser) => {
     setUsers([...users, { ...newUser, id: Date.now().toString(), active: true }]);
@@ -136,7 +84,7 @@ const App = () => {
     setActiveTab('schedule');
   };
 
-  const isLoading = usersLoading || eventsLoading || ministriesLoading || localLoading;
+  const isLoading = userLoading || usersLoading || eventsLoading || ministriesLoading || tcdLoading || assignmentsLoading;
 
   if (isLoading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
